@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Discover peers in a RTMP network swarm",
   "main": "index.js",
+  "preferGlobal": true,
+  "bin": {
+    "rtmp-swarm": "./bin/rtmp-swarm"
+  },
   "scripts": {
     "test": ":"
   },
@@ -14,13 +18,17 @@
   "author": "Joseph Werle <joseph.werle@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "ansi-diff-stream": "^1.2.1",
     "batch": "^0.6.1",
+    "blake2b": "^2.1.2",
     "cuid": "^2.1.0",
     "debug": "^3.1.0",
     "discovery-channel": "^5.5.1",
     "extend": "^3.0.1",
+    "minimist": "^1.2.0",
     "node-media-server": "^1.2.6",
-    "pump": "^3.0.0"
+    "pump": "^3.0.0",
+    "randombytes": "^2.0.6"
   },
   "devDependencies": {},
   "repository": {

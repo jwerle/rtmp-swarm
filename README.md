@@ -92,6 +92,21 @@ Join a network swarm by key. Will call `cb(err)` after joining.
 
 Close and destroy the network swarm.
 
+## Command Line Usage
+
+```sh
+usage: rtmp-stream [-hV] [--help] [--version]
+                   [-k|--key|--key=<key>]
+
+options:
+  -k, --key=<key>  Discovery key for this RTMP stream.
+  -V, --version    Output program version.
+  -h, --help       Show this message.
+
+```
+
+If you do not specify a `key`, one will be generated for you.
+
 ## License
 
 MIT

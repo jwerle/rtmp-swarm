@@ -78,11 +78,13 @@ class DiscoverySwarm extends EventEmitter {
   onconnection(socket) {
     debug("onconnection")
     const { maxConnections, connected, onerror, stream, peers, seen, net } = this
-    const swarm = this
-    this.emit('connection', socket)
+    socket.once('close', () => { this.totalConnections-- })
+    this.totalConnections++
     this.session(socket)
+    this.emit('connection', socket)
     for (const k in peers) {
       const peer = peers[k]
+      const swarm = this
       debug("onconnection: peer:", peer)
       connect()
       function connect() {
@@ -109,6 +111,7 @@ class DiscoverySwarm extends EventEmitter {
         sock.on('connect', () => {
           debug("onconnection: peer: connect:", peer)
           swarm.totalConnections++
+          swarm.emit('connection', sock)
         })
 
         sock.on('close', () => {

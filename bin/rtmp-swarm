@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+
+const { basename } = require('path')
+const { format } = require('util')
+const randombytes = require('randombytes')
+const discovery = require('../')
+const blake2b = require('blake2b')
+const differ = require('ansi-diff-stream')
+const argv = require('minimist')(process.argv.slice(2))
+
+const usage = `
+usage: rtmp-stream [-hV] [--help] [--version]
+                   [-k|--key|--key=<key>]
+
+options:
+  -k, --key=<key>  Discovery key for this RTMP stream.
+  -V, --version    Output program version.
+  -h, --help       Show this message.
+`.trim()
+
+const stderr = differ()
+const stdout = differ()
+
+stderr.pipe(process.stderr)
+stdout.pipe(process.stdout)
+
+function fatal(...args) {
+  stderr.write(`fatal: ${format(...args)}\n`)
+  process.exit(1)
+}
+
+function info(...args) {
+  stdout.write(`info: ${format(...args)}`)
+}
+
+function discoveryKey() {
+  const out = Buffer.alloc(32)
+  const hash = blake2b(32, randombytes(32))
+  hash.digest(out)
+  return out.toString('hex')
+}
+
+const {
+  RTMP_SWARM_MAX_CONNECTIONS
+} = process.env
+
+void function main() {
+  if (argv.h || argv.help) {
+    return console.log(usage)
+  }
+
+  if (argv.V || argv.version) {
+    return console.log(require('../package').version)
+  }
+
+  const port = argv.p || argv.port || 0
+  const key = argv.k || argv.key || discoveryKey()
+  const $0 = 'rtmp-stream'
+
+  const node = discovery({
+    maxConnections: RTMP_SWARM_MAX_CONNECTIONS || 0
+  })
+
+  node.join(key).listen(port)
+
+  node.on('listening', () => {
+    const { port } = node.address()
+    console.log("key: %s", key)
+    console.log("port: %s", port)
+    console.log("endpoint: rtmp://localhost:%s/%s", port, key)
+  })
+
+  node.on('peer', (peer) => {
+    info('peer:', peer.id);
+  })
+
+  node.on('connection', (conn) => {
+    info("connection: #%s", node.totalConnections)
+    conn.on('close', () => {
+      info("connection: close: #%s", node.totalConnections)
+    })
+  })
+}()
