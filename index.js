@@ -35,7 +35,9 @@ class DiscoverySwarm extends EventEmitter {
   constructor(opts) {
     super()
     opts = extend(true, opts || {}, {
-      hash: false
+      hash: false,
+      dht: {interval: 30*1000},
+      dns: {tty: 0, multicast: true, loopback: false, interval: 30*1000},
     }, opts)
 
     this.onpeer = this.onpeer.bind(this)
@@ -78,57 +80,62 @@ class DiscoverySwarm extends EventEmitter {
   onconnection(socket) {
     debug("onconnection")
     const { maxConnections, connected, onerror, stream, peers, seen, net } = this
-    socket.once('close', () => { this.totalConnections-- })
+    const swarm = this
     this.totalConnections++
-    this.session(socket)
+    this.on('peer', pool)
     this.emit('connection', socket)
-    for (const k in peers) {
-      const peer = peers[k]
-      const swarm = this
-      debug("onconnection: peer:", peer)
-      connect()
-      function connect() {
-        if (PEER_BANNED == seen[k]) {
-          debug("onconnection: connect: peer: banned:", peer)
-          return
-        }
-
-        if (k in connected) {
-          debug("onconnection: connect: peer: skipped:", peer)
-          return
-        }
-
-        if (maxConnections && swarm.totalConnections >= maxConnections) {
-          debug("onconnection: connect: peer: skipped:", peer)
-          return
-        }
-
-        const sock = net.connect(peer.port, peer.host)
-
-        connected[k] = sock
-        socket.pipe(sock)
-
-        sock.on('connect', () => {
-          debug("onconnection: peer: connect:", peer)
-          swarm.totalConnections++
-          swarm.emit('connection', sock)
-        })
-
-        sock.on('close', () => {
-          debug("onconnection: peer: close:", peer)
-          delete connected[k]
-          swarm.totalConnections--
-        })
-
-        sock.on('error', (err) => {
-          debug("onconnection: peer: error:", err)
-          if (peer.retries++ <= MAX_RETRIES) {
-            connect()
-          } else {
-            seen[k] = PEER_BANNED
-            delete peers[k]
+    this.session(socket)
+    socket.once('close', () => { this.totalConnections-- })
+    socket.on('close', () => this.removeListener('peer', pool))
+    pool()
+    function pool() {
+      for (const k in peers) {
+        const peer = peers[k]
+        debug("onconnection: peer:", peer)
+        connect()
+        function connect() {
+          if (PEER_BANNED == seen[k]) {
+            debug("onconnection: connect: peer: banned:", peer)
+            return
           }
-        })
+
+          if (k in connected) {
+            debug("onconnection: connect: peer: skipped:", peer)
+            return
+          }
+
+          if (maxConnections && swarm.totalConnections >= maxConnections) {
+            debug("onconnection: connect: peer: skipped:", peer)
+            return
+          }
+
+          const sock = net.connect(peer.port, peer.host)
+
+          connected[k] = sock
+          socket.pipe(sock)
+
+          sock.on('connect', () => {
+            debug("onconnection: peer: connect:", peer)
+            swarm.totalConnections++
+            swarm.emit('connection', sock)
+          })
+
+          sock.on('close', () => {
+            debug("onconnection: peer: close:", peer)
+            delete connected[k]
+            swarm.totalConnections--
+          })
+
+          sock.on('error', (err) => {
+            debug("onconnection: peer: error:", err)
+            if (peer.retries++ <= MAX_RETRIES) {
+              connect()
+            } else {
+              seen[k] = PEER_BANNED
+              delete peers[k]
+            }
+          })
+        }
       }
     }
   }
