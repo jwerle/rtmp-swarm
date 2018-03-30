@@ -1,0 +1,34 @@
+{
+  "name": "rtmp-swarm",
+  "version": "1.0.0",
+  "description": "Discover peers in a RTMP network swarm",
+  "main": "index.js",
+  "scripts": {
+    "test": ":"
+  },
+  "keywords": [
+    "rtmp",
+    "discovery",
+    "swarm"
+  ],
+  "author": "Joseph Werle <joseph.werle@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "batch": "^0.6.1",
+    "cuid": "^2.1.0",
+    "debug": "^3.1.0",
+    "discovery-channel": "^5.5.1",
+    "extend": "^3.0.1",
+    "node-media-server": "^1.2.6",
+    "pump": "^3.0.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jwerle/rtmp-swarm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jwerle/rtmp-swarm/issues"
+  },
+  "homepage": "https://github.com/jwerle/rtmp-swarm#readme"
+}
