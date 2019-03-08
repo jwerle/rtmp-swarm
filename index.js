@@ -207,7 +207,7 @@ class DiscoverySwarm extends EventEmitter {
     }
 
     const { port } = this.address()
-    this.channel.join(key, port, {impliedPort: true}, cb)
+    this.channel.join(key, port, cb)
     return this
   }
 

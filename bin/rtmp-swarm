@@ -35,11 +35,17 @@ function info(...args) {
 
 function discoveryKey(defaultKey) {
   if (defaultKey) {
-    return Buffer.from(defaultKey)
+    if (Buffer.isBuffer(defaultKey)) {
+      return defaultKey
+    } else if (/^[a-fA-F0-9]+$/.test(defaultKey)) {
+      return Buffer.from(defaultKey, 'hex')
+    } else {
+      return Buffer.from(defaultKey)
+    }
   }
 
   const out = Buffer.alloc(32)
-  const hash = blake2b(32, Buffer.alloc(32).fill(seed || randombytes(32)))
+  const hash = blake2b(32, randombytes(32))
   hash.digest(out)
   return out.toString('hex')
 }
