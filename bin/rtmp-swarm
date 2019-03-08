@@ -64,10 +64,10 @@ void function main() {
   node.join(key).listen(port)
 
   node.on('listening', () => {
-    const { port } = node.address()
+    const { port, address } = node.address()
     console.log("key: %s", key)
     console.log("port: %s", port)
-    console.log("endpoint: rtmp://localhost:%s/%s", port, key)
+    console.log("endpoint: rtmp://%s:%s/%s", address, port, key)
   })
 
   node.on('peer', (peer) => {
