@@ -33,9 +33,13 @@ function info(...args) {
   stdout.write(`info: ${format(...args)}`)
 }
 
-function discoveryKey() {
+function discoveryKey(defaultKey) {
+  if (defaultKey) {
+    return Buffer.from(defaultKey)
+  }
+
   const out = Buffer.alloc(32)
-  const hash = blake2b(32, randombytes(32))
+  const hash = blake2b(32, Buffer.alloc(32).fill(seed || randombytes(32)))
   hash.digest(out)
   return out.toString('hex')
 }
@@ -54,20 +58,27 @@ void function main() {
   }
 
   const port = argv.p || argv.port || 0
-  const key = argv.k || argv.key || discoveryKey()
+  const key = discoveryKey(argv.k || argv.key)
   const $0 = 'rtmp-stream'
 
   const node = discovery({
-    maxConnections: RTMP_SWARM_MAX_CONNECTIONS || 0
+    maxConnections: RTMP_SWARM_MAX_CONNECTIONS || 0,
+    dht: {
+      bootstrap: [].concat(argv.dht).filter(Boolean),
+    },
+
+    dns: {
+      servers: [].concat(argv.dns).filter(Boolean),
+    }
   })
 
-  node.join(key).listen(port)
+  node.join(Buffer.alloc(32).fill(key)).listen(port)
 
   node.on('listening', () => {
     const { port, address } = node.address()
-    console.log("key: %s", key)
+    console.log("key: %s", argv.key || argv.k || key)
     console.log("port: %s", port)
-    console.log("endpoint: rtmp://%s:%s/%s", address, port, key)
+    console.log("endpoint: rtmp://%s:%s/", address, port)
   })
 
   node.on('peer', (peer) => {
