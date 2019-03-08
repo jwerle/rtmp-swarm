@@ -1,6 +1,6 @@
 {
   "name": "rtmp-swarm",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Discover peers in a RTMP network swarm",
   "main": "index.js",
   "preferGlobal": true,
