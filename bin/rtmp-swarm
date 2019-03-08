@@ -13,6 +13,7 @@ usage: rtmp-stream [-hV] [--help] [--version]
                    [-k|--key|--key=<key>]
 
 options:
+  -a, --announce   Announce server to network swarm
   -k, --key=<key>  Discovery key for this RTMP stream.
   -V, --version    Output program version.
   -h, --help       Show this message.
@@ -69,11 +70,17 @@ void function main() {
 
   const node = discovery({
     maxConnections: RTMP_SWARM_MAX_CONNECTIONS || 0,
+    announce: argv.a || argv.announce,
+
     dht: {
       bootstrap: [].concat(argv.dht).filter(Boolean),
     },
 
     dns: {
+      multicast: true,
+      interval: 1 * 60 * 1000,
+      loopback: true,
+      domain: 'rtmp-swarm.local',
       servers: [].concat(argv.dns).filter(Boolean),
     }
   })
@@ -84,7 +91,8 @@ void function main() {
     const { port, address } = node.address()
     console.log("key: %s", argv.key || argv.k || key)
     console.log("port: %s", port)
-    console.log("endpoint: rtmp://%s:%s/", address, port)
+    console.log("announcing: %s", argv.a || argv.announce ? true : false)
+    console.log("endpoint: rtmp://%s:%s", address, port)
   })
 
   node.on('peer', (peer) => {

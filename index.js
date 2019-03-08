@@ -53,6 +53,7 @@ class DiscoverySwarm extends EventEmitter {
     this.stream = opts.stream || null
     this.server = this.net.createServer(this.onconnection)
     this.channel = new DiscoveryChannel(opts)
+    this.announce = !!opts.announce
 
     this.closed = false
     this.listening = false
@@ -82,62 +83,10 @@ class DiscoverySwarm extends EventEmitter {
     const { maxConnections, connected, onerror, stream, peers, seen, net } = this
     const swarm = this
     this.totalConnections++
-    this.on('peer', pool)
+    //this.on('peer', pool)
     this.emit('connection', socket)
     this.session(socket)
     socket.once('close', () => { this.totalConnections-- })
-    socket.on('close', () => this.removeListener('peer', pool))
-    pool()
-    function pool() {
-      for (const k in peers) {
-        const peer = peers[k]
-        debug("onconnection: peer:", peer)
-        connect()
-        function connect() {
-          if (PEER_BANNED == seen[k]) {
-            debug("onconnection: connect: peer: banned:", peer)
-            return
-          }
-
-          if (k in connected) {
-            debug("onconnection: connect: peer: skipped:", peer)
-            return
-          }
-
-          if (maxConnections && swarm.totalConnections >= maxConnections) {
-            debug("onconnection: connect: peer: skipped:", peer)
-            return
-          }
-
-          const sock = net.connect(peer.port, peer.host)
-
-          connected[k] = sock
-          socket.pipe(sock)
-
-          sock.on('connect', () => {
-            debug("onconnection: peer: connect:", peer)
-            swarm.totalConnections++
-            swarm.emit('connection', sock)
-          })
-
-          sock.on('close', () => {
-            debug("onconnection: peer: close:", peer)
-            delete connected[k]
-            swarm.totalConnections--
-          })
-
-          sock.on('error', (err) => {
-            debug("onconnection: peer: error:", err)
-            if (peer.retries++ <= MAX_RETRIES) {
-              connect()
-            } else {
-              seen[k] = PEER_BANNED
-              delete peers[k]
-            }
-          })
-        }
-      }
-    }
   }
 
   onlistening() {
@@ -206,8 +155,13 @@ class DiscoverySwarm extends EventEmitter {
       return this.once('listening', () => this.join(key, cb))
     }
 
-    const { port } = this.address()
-    this.channel.join(key, port, cb)
+    if (this.announce) {
+      const { port } = this.address()
+      this.channel.join(key, port, cb)
+    } else {
+      this.channel.join(key, cb)
+    }
+
     return this
   }
 
