@@ -8,7 +8,7 @@ const pump = require('pump')
 const cuid = require('cuid')
 const net = require('net')
 
-require('node-media-server/logger').setLogType(0)
+//require('node-media-server/logger').setLogType(0)
 
 const PEER_SEEN = 1
 const PEER_BANNED = 2
